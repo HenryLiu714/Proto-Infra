@@ -1,7 +1,9 @@
 #pragma once
 
 #include <unordered_map>
+#include <memory>
 
+#include "Context.h"
 #include "Event.h"
 
 struct Position {
@@ -23,4 +25,5 @@ class Portfolio {
     protected:
         double cash;
         std::unordered_map<std::string, double> active_positions;
+        Context* context = nullptr;
 };

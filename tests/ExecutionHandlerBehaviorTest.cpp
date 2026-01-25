@@ -15,8 +15,10 @@ protected:
         }
     } sink;
 
+    Context ctx{&sink};
+
     void SetUp() override {
-        handler.set_sink(&sink);
+        handler.set_context(&ctx);
     }
 
     std::shared_ptr<MarketEvent> createMarketEvent(
@@ -281,7 +283,8 @@ TEST_F(ExecutionHandlerBehaviorTest, FillContainsCorrectCommission) {
 
 TEST_F(ExecutionHandlerBehaviorTest, CustomCommissionRate) {
     ExecutionHandler handler_custom(0.0005, 0.5);
-    handler_custom.set_sink(&sink);
+    Context local_ctx{&sink};
+    handler_custom.set_context(&local_ctx);
     auto order = createMarketOrder("AAPL", Direction::BUY, 100);
     handler_custom.submit_order(std::move(order));
 

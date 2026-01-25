@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "Types.h"
 
@@ -21,9 +22,7 @@ struct MarketEvent : public Event {
 
 struct SignalEvent : public Event {
     SignalEvent() {type = EventType::SIGNAL;}
-    std::string ticker;
-    double value; // adjustable by strategy
-    std::string strategy_id;
+    std::unique_ptr<Signal> signal;
 
 };
 

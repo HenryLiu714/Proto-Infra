@@ -35,6 +35,7 @@ class Engine : public EventSink {
 
     private:
         EngineConfig config;
+        Context context;
 
         std::shared_ptr<DataHandler> data_handler;
         std::shared_ptr<Strategy> strategy;

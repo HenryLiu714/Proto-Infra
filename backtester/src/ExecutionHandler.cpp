@@ -13,13 +13,21 @@ double ExecutionHandler::calculate_commission(double quantity, double share_pric
 }
 
 void ExecutionHandler::execute_order(const Order& order, double share_price) {
+    if (context == nullptr || context->sink == nullptr) {
+        return;
+    }
+
     double commission = calculate_commission(order.quantity, share_price);
     auto fe = std::make_unique<FillEvent>();
     fe->fill = std::make_unique<Fill>(Fill{order.ticker, order.quantity, share_price, commission});
-    context.sink->publish(std::move(fe));
+    context->sink->publish(std::move(fe));
 }
 
 void ExecutionHandler::on_market_update(const MarketEvent& update) {
+    if (context == nullptr || context->sink == nullptr) {
+        return;
+    }
+
     // Update current prices and execute orders
     const std::unordered_map<std::string, Bar>* bars = &update.bars;
 
@@ -53,7 +61,7 @@ void ExecutionHandler::on_market_update(const MarketEvent& update) {
         // Send empty FillEvent
         auto fe = std::make_unique<FillEvent>();
         fe->fill = std::make_unique<Fill>(Fill{order->ticker, 0, 0, 0});
-        context.sink->publish(std::move(fe));
+        context->sink->publish(std::move(fe));
     }
 }
 
@@ -61,6 +69,6 @@ void ExecutionHandler::submit_order(std::unique_ptr<Order> order) {
     pending_orders.push_back(std::move(order));
 }
 
-void ExecutionHandler::set_context(Context context_) {
+void ExecutionHandler::set_context(Context* context_) {
     context = context_;
 }

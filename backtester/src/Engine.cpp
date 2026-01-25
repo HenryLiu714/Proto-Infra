@@ -5,8 +5,20 @@ Engine::Engine(const EngineConfig& config_, std::shared_ptr<DataHandler> data_ha
     data_handler = data_handler_;
 
     execution_handler = std::make_unique<ExecutionHandler>();
+    context = Context{this};
 
-    execution_handler->set_context(Context{this});
+    execution_handler->set_context(&context);
+
+    if (data_handler) {
+        data_handler->set_context(&context);
+    }
+}
+
+Engine::~Engine() = default;
+
+void Engine::publish(std::unique_ptr<Event> event) {
+    // Push incoming events (Order/Fill/Signal) onto the engine queue for processing
+    event_queue.push_back(std::move(event));
 }
 
 void Engine::set_config(const EngineConfig& config_) {
@@ -15,14 +27,26 @@ void Engine::set_config(const EngineConfig& config_) {
 
 void Engine::set_data_handler(std::shared_ptr<DataHandler> data_handler_) {
     data_handler = data_handler_;
+
+    if (data_handler) {
+        data_handler->set_context(&context);
+    }
 }
 
 void Engine::set_strategy(std::shared_ptr<Strategy> strategy_) {
     strategy = strategy_;
+
+    if (strategy) {
+        strategy->set_context(&context);
+    }
 }
 
 void Engine::set_portfolio(std::shared_ptr<Portfolio> portfolio_) {
     portfolio = portfolio_;
+
+    if (portfolio) {
+        portfolio->set_context(&context);
+    }
 }
 
 void Engine::run_backtest() {
@@ -32,21 +56,40 @@ void Engine::run_backtest() {
     // 2. Start backtest
     while (data_handler->has_next()) {
         // Queue should be empty at this point
-        std::unique_ptr<MarketEvent> update = data_handler->next();
+        event_queue.push_back(data_handler->next());
 
-        // // 3. Execute any orders
-        // execution_handler->on_market_update(*update);
+        // 4. Now iterate through event queue
+        while (!event_queue.empty()) {
+            std::unique_ptr<Event> event = std::move(event_queue.front());
+            event_queue.pop_front();
 
-        // // 4. Call strategy and generate any signals
-        // std::vector<std::shared_ptr<Signal>> signals = strategy->on_update(update);
+            switch (event->type) {
+                case EventType::MARKET: {
+                    MarketEvent& market_event = dynamic_cast<MarketEvent&>(*event);
 
-        // // 5. Send signals to portfolio
-        // portfolio->on_signals(signals);
+                    execution_handler->on_market_update(market_event);
+                    strategy->on_update(market_event);
+                    break;
+                }
 
-        // // 6. Receive any new orders from the portfolio
-        // std::vector<std::shared_ptr<Order>> orders = portfolio->send_orders();
+                case EventType::SIGNAL: {
+                    SignalEvent& signal_event = dynamic_cast<SignalEvent&>(*event);
+                    portfolio->on_signal(*signal_event.signal);
+                    break;
+                }
 
-        // // 7. Submit orders to execution handler
-        // execution_handler->submit_orders(orders);
+                case EventType::ORDER: {
+                    OrderEvent& order_event = dynamic_cast<OrderEvent&>(*event);
+                    execution_handler->submit_order(std::move(order_event.order));
+                    break;
+                }
+
+                case EventType::FILL: {
+                    FillEvent& fill_event = dynamic_cast<FillEvent&>(*event);
+                    portfolio->on_fill(*fill_event.fill);
+                    break;
+                }
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ class ExecutionHandler {
 
         void on_market_update(const MarketEvent& update); // Assumes limit orders don't carry over
         void submit_order(std::unique_ptr<Order> order);
-        void set_context(Context context_);
+        void set_context(Context* context_);
 
     private:
         double slippage;
@@ -22,5 +22,5 @@ class ExecutionHandler {
         double calculate_commission(double quantity, double share_price);
         void execute_order(const Order& order, double share_price);
 
-        Context context;
+        Context* context;
 };

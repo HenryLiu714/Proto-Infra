@@ -14,7 +14,7 @@ class Strategy {
 
         void set_context(Context* context_);
 
-    private:
+    protected:
         Context* context = nullptr;
         void send_signal(std::unique_ptr<Signal> signal);
 };

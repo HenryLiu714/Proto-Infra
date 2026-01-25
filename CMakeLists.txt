@@ -11,6 +11,9 @@ include_directories(${CMAKE_SOURCE_DIR}/backtester/include)
 set(SOURCES
     backtester/src/Engine.cpp
     backtester/src/ExecutionHandler.cpp
+    backtester/src/DataHandler.cpp
+    backtester/src/Portfolio.cpp
+    backtester/src/Strategy.cpp
 )
 
 # Create the main library

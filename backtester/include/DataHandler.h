@@ -3,6 +3,7 @@
 #include "unordered_map"
 
 #include "Event.h"
+#include "Context.h"
 
 class DataHandler {
     public:
@@ -11,6 +12,9 @@ class DataHandler {
         virtual std::unique_ptr<MarketEvent> next() = 0;
 
         void set_context(Context* context_);
+
+    protected:
+        Context* context = nullptr;
 };
 
 class CustomUniverseDataHandler : public DataHandler {
