@@ -12,9 +12,8 @@ from .connection import (
 from .models import (
     Fill,
     Order,
-    Trade,
-    OrderStatus,
-    TradeStatus
+    Position,
+    OrderStatus
 )
 
 from .operations import (
@@ -32,16 +31,14 @@ from .operations import (
     update_order_status,
     get_all_orders,
 
-    # Trade operations
-    create_trade,
-    get_trade_by_id,
-    get_trades_by_ticker,
-    get_trades_by_strategy,
-    get_trades_by_status,
-    update_trade_status,
-    get_all_trades,
-    get_open_trades,
-    close_trade
+    # Position operations
+    create_position,
+    get_position_by_id,
+    get_positions_by_symbol,
+    get_positions_by_status,
+    update_position,
+    delete_position,
+    get_open_positions
 )
 
 __all__ = [
@@ -56,9 +53,9 @@ __all__ = [
     # Models
     "Fill",
     "Order",
-    "Trade",
+    "Position",
     "OrderStatus",
-    "TradeStatus",
+
 
     # Fill operations
     "create_fill",
@@ -74,14 +71,12 @@ __all__ = [
     "update_order_status",
     "get_all_orders",
 
-    # Trade operations
-    "create_trade",
-    "get_trade_by_id",
-    "get_trades_by_ticker",
-    "get_trades_by_strategy",
-    "get_trades_by_status",
-    "update_trade_status",
-    "get_all_trades",
-    "get_open_trades",
-    "close_trade"
+    # Position operations
+    "create_position",
+    "get_position_by_id",
+    "get_positions_by_symbol",
+    "get_positions_by_status",
+    "update_position",
+    "delete_position",
+    "get_open_positions"
 ]

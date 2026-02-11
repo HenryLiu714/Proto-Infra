@@ -1,6 +1,6 @@
-from Types import *
-from Events import MarketEvent
-from Context import *
+from src.Types import *
+from src.Events import MarketEvent
+from src.Context import *
 
 class Strategy(object):
     def __init__(self, name):

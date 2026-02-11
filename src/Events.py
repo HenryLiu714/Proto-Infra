@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from Types import *
+from src.Types import *
 
 class Event(BaseModel):
     event_type: str
@@ -7,7 +7,6 @@ class Event(BaseModel):
 
 class MarketEvent(Event):
     event_type: str = "MARKET"
-    bars: dict[str, Bar]
 
 class SignalEvent(Event):
     event_type: str = "SIGNAL"

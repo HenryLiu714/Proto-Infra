@@ -1,11 +1,21 @@
-import requests
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 
-from Alert import send_alert
-from Types import *
+from db import (
+    create_order
+)
+
+from src.Alert import send_alert
+from src.Types import *
+
+POSITION_INTENT_MAP = {
+    (Direction.LONG, OrderIntent.OPEN): "buy_to_open",
+    (Direction.LONG, OrderIntent.CLOSE): "buy_to_close",
+    (Direction.SHORT, OrderIntent.OPEN): "sell_to_open",
+    (Direction.SHORT, OrderIntent.CLOSE): "sell_to_close"
+}
 
 class ExecutionHandler(object):
     def __init__(self, trading_client: TradingClient):
@@ -21,7 +31,8 @@ class ExecutionHandler(object):
                     symbol=order.symbol,
                     qty=order.quantity,
                     side=OrderSide.BUY if order.side == Direction.LONG else OrderSide.SELL,
-                    time_in_force=TimeInForce.GTC
+                    time_in_force=TimeInForce.GTC,
+                    position_intent = POSITION_INTENT_MAP.get((order.side, order.order_intent))
                 )
 
                 order_response = self.trading_client.submit_order(
@@ -34,18 +45,13 @@ class ExecutionHandler(object):
                     qty=order.quantity,
                     side=OrderSide.BUY if order.side == Direction.LONG else OrderSide.SELL,
                     time_in_force=TimeInForce.DAY, # Limit orders only valid for the day
-                    limit_price=order.limit_price
+                    limit_price=order.limit_price,
+                    position_intent = POSITION_INTENT_MAP.get((order.side, order.order_intent))
                 )
 
                 order_response = self.trading_client.submit_order(
                     order_data=limit_order_data
                 )
 
-
-
-            else:
-                raise ValueError(f"Unsupported order type: {order.order_type}")
-
         except Exception as e:
             send_alert(f"Order execution failed for {order.symbol}: {str(e)}")
-            order.status = OrderStatus.FAILED

@@ -2,13 +2,12 @@
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import select, update, delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from .connection import get_db_session
-from .models import Fill, Order, Trade
+from .models import Fill, Order, Position
 
 
 # ===== FILL OPERATIONS =====
@@ -178,127 +177,131 @@ def get_all_orders(limit: Optional[int] = None) -> List[Order]:
         return []
 
 
-# ===== TRADE OPERATIONS =====
+# ===== POSITION OPERATIONS =====
 
-def create_trade(
-    time: datetime,
-    ticker: str,
+def create_position(
+    symbol: str,
+    status: str,
+    side: str,
+    open_time: datetime,
+    open_price: float,
     quantity: float,
-    price: float,
-    side: Optional[str] = None,
-    commission: float = 0,
-    strategy_id: Optional[str] = None,
-    status: str = "open"
-) -> Optional[Trade]:
-    """Create a new trade record."""
+    strategy_tag: Optional[str] = None,
+    commission_open: float = 0,
+    close_time: Optional[datetime] = None,
+    close_price: Optional[float] = None,
+    commission_close: float = 0,
+    tags: Optional[Dict[str, Any]] = None,
+    notes: Optional[str] = None
+) -> Optional[Position]:
+    """Create a new position record."""
     try:
         with get_db_session() as session:
-            trade = Trade(
-                time=time,
-                ticker=ticker,
+            position = Position(
+                symbol=symbol,
+                strategy_tag=strategy_tag,
+                status=status,
                 side=side,
+                open_time=open_time,
+                open_price=open_price,
                 quantity=quantity,
-                price=price,
-                commission=commission,
-                strategy_id=strategy_id,
-                status=status
+                commission_open=commission_open,
+                close_time=close_time,
+                close_price=close_price,
+                commission_close=commission_close,
+                tags=tags,
+                notes=notes
             )
-            session.add(trade)
+            session.add(position)
             session.flush()
-            session.refresh(trade)
-            # Access attributes before session closes
-            _ = trade.trade_id
-            session.expunge(trade)
-            return trade
+            session.refresh(position)
+            _ = position.id
+            session.expunge(position)
+            return position
     except SQLAlchemyError as e:
-        print(f"Error creating trade: {e}")
+        print(f"Error creating position: {e}")
         return None
 
 
-def get_trade_by_id(trade_id: UUID) -> Optional[Trade]:
-    """Get a trade by its ID."""
+def get_position_by_id(position_id: int) -> Optional[Position]:
+    """Get a position by its ID."""
     try:
         with get_db_session() as session:
-            trade = session.query(Trade).filter(Trade.trade_id == trade_id).first()
-            if trade:
-                session.expunge(trade)
-            return trade
+            position = session.query(Position).filter(Position.id == position_id).first()
+            if position:
+                session.expunge(position)
+            return position
     except SQLAlchemyError as e:
-        print(f"Error getting trade: {e}")
+        print(f"Error getting position: {e}")
         return None
 
 
-def get_trades_by_ticker(ticker: str) -> List[Trade]:
-    """Get all trades for a specific ticker."""
+def get_positions_by_symbol(symbol: str) -> List[Position]:
+    """Get all positions for a specific symbol."""
     try:
         with get_db_session() as session:
-            trades = session.query(Trade).filter(Trade.ticker == ticker).all()
-            for trade in trades:
-                session.expunge(trade)
-            return trades
+            positions = session.query(Position).filter(Position.symbol == symbol).all()
+            for position in positions:
+                session.expunge(position)
+            return positions
     except SQLAlchemyError as e:
-        print(f"Error getting trades: {e}")
+        print(f"Error getting positions: {e}")
         return []
 
 
-def get_trades_by_strategy(strategy_id: str) -> List[Trade]:
-    """Get all trades for a specific strategy."""
+def get_positions_by_status(status: str) -> List[Position]:
+    """Get all positions with a specific status."""
     try:
         with get_db_session() as session:
-            trades = session.query(Trade).filter(Trade.strategy_id == strategy_id).all()
-            for trade in trades:
-                session.expunge(trade)
-            return trades
+            positions = session.query(Position).filter(Position.status == status).all()
+            for position in positions:
+                session.expunge(position)
+            return positions
     except SQLAlchemyError as e:
-        print(f"Error getting trades: {e}")
+        print(f"Error getting positions: {e}")
         return []
 
 
-def get_trades_by_status(status: str) -> List[Trade]:
-    """Get all trades with a specific status."""
+def update_position(position_id: int, **updates: Any) -> bool:
+    """Update a position record by ID."""
+    allowed_fields = {
+        "symbol",
+        "strategy_tag",
+        "status",
+        "side",
+        "open_time",
+        "open_price",
+        "quantity",
+        "commission_open",
+        "close_time",
+        "close_price",
+        "commission_close",
+        "tags",
+        "notes"
+    }
+    update_data = {key: value for key, value in updates.items() if key in allowed_fields}
+    if not update_data:
+        return False
     try:
         with get_db_session() as session:
-            trades = session.query(Trade).filter(Trade.status == status).all()
-            for trade in trades:
-                session.expunge(trade)
-            return trades
-    except SQLAlchemyError as e:
-        print(f"Error getting trades: {e}")
-        return []
-
-
-def update_trade_status(trade_id: UUID, status: str) -> bool:
-    """Update trade status."""
-    try:
-        with get_db_session() as session:
-            session.query(Trade).filter(Trade.trade_id == trade_id).update({"status": status})
+            session.query(Position).filter(Position.id == position_id).update(update_data)
             return True
     except SQLAlchemyError as e:
-        print(f"Error updating trade: {e}")
+        print(f"Error updating position: {e}")
         return False
 
 
-def get_all_trades(limit: Optional[int] = None) -> List[Trade]:
-    """Get all trades, optionally limited."""
+def delete_position(position_id: int) -> bool:
+    """Delete a position by ID."""
     try:
         with get_db_session() as session:
-            query = session.query(Trade).order_by(Trade.time.desc())
-            if limit:
-                query = query.limit(limit)
-            trades = query.all()
-            for trade in trades:
-                session.expunge(trade)
-            return trades
+            deleted = session.query(Position).filter(Position.id == position_id).delete()
+            return bool(deleted)
     except SQLAlchemyError as e:
-        print(f"Error getting trades: {e}")
-        return []
+        print(f"Error deleting position: {e}")
+        return False
 
 
-def get_open_trades() -> List[Trade]:
-    """Get all open trades."""
-    return get_trades_by_status("open")
-
-
-def close_trade(trade_id: UUID) -> bool:
-    """Close a trade by setting status to closed."""
-    return update_trade_status(trade_id, "closed")
+def get_open_positions() -> List[Position]:
+    """Get all open positions."""
+    return get_positions_by_status("OPEN")

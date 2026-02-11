@@ -15,6 +15,10 @@ class OrderType(str, Enum):
     MARKET = "MARKET"
     LIMIT = "LIMIT"
 
+class OrderIntent(str, Enum):
+    OPEN = "OPEN"
+    CLOSE = "CLOSE"
+
 class Bar(BaseModel):
     symbol: str
     timestamp: float
@@ -24,9 +28,16 @@ class Bar(BaseModel):
     close: float
     volume: float
 
+class Position(BaseModel):
+    symbol: str
+    position_id: str
+    quantity: float
+    entry_price: float
+
 class Fill(BaseModel):
     symbol: str
     quantity: float
+    side: Direction
     fill_price: float
     commission: float
 
@@ -37,6 +48,7 @@ class Order(BaseModel):
     quantity: float
     direction: Direction
     price: float | None = None
+    order_intent: OrderIntent | None = None
 
 class Signal(BaseModel):
     strategy_id: str
