@@ -53,8 +53,7 @@ class SniperStrategy(Strategy):
                 continue
 
             # Check if entry criteria is met, if it is send signal to enter position
-            #!TODO: Flip this conditional
-            if not self.check_entry_criteria(latest_data):
+            if self.check_entry_criteria(latest_data):
                 entry_price = self.calculate_entry_price(latest_data)
 
                 signal = Signal(strategy_id=self.name, symbol=symbol, value=entry_price)

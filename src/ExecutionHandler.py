@@ -30,9 +30,9 @@ class ExecutionHandler(object):
                 market_order_data = MarketOrderRequest(
                     symbol=order.symbol,
                     qty=order.quantity,
-                    side=OrderSide.BUY if order.side == Direction.LONG else OrderSide.SELL,
+                    side=OrderSide.BUY if order.direction == Direction.LONG else OrderSide.SELL,
                     time_in_force=TimeInForce.GTC,
-                    position_intent = POSITION_INTENT_MAP.get((order.side, order.order_intent))
+                    position_intent = POSITION_INTENT_MAP.get((order.direction, order.order_intent))
                 )
 
                 order_response = self.trading_client.submit_order(

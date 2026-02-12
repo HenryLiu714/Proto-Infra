@@ -31,8 +31,9 @@ class Bar(BaseModel):
 
 class Position(BaseModel):
     symbol: str
-    position_id: str
+    position_id: str = None
     quantity: float
+    side: Direction
     entry_price: float
     entry_time: datetime = None
 

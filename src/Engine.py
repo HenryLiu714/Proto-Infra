@@ -71,7 +71,6 @@ class Engine(EventSink):
         try:
             if data.event == "new":
                 create_order(order_id=data.order.id, symbol=data.order.symbol, quantity_ordered=float(data.order.qty), status="pending")
-
                 send_alert(f"New order event received from trading stream. \n {data.order.symbol} {data.order.qty} @ {data.order.limit_price if data.order.limit_price else 'MKT'}")
 
             elif data.event == "fill" or data.event == "partial_fill":
@@ -126,7 +125,5 @@ class Engine(EventSink):
                 self.portfolio.on_fill(current_event.fill)
 
     def run(self):
-        self.generate_market_open_event()
-
         self.schedule_tasks()
         self.trading_stream.run()
